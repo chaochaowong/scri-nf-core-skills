@@ -1,0 +1,4 @@
+interface:
+  display_name: "PacVar on Sasquatch"
+  short_description: "Prepare and run nf-core/pacvar on Sasquatch"
+  default_prompt: "Use $pacvar to prepare my nf-core/pacvar run on Sasquatch."

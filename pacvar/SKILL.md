@@ -12,10 +12,11 @@ Prepare all run files inside the user's existing project directory. Treat that s
 Confirm the starting project directory, then gather the following information. Ask for missing items together when practical.
 
 - Sample name, absolute HiFi BAM path, and optional absolute BAM `.pbi` path for every sample.
-- Sasquatch association (`assoc`) name. Use `sarthy_lab` when the user does not provide one.
+- Ask: "What is your Sasquatch association (`assoc`) name?" For example, `sarthy_lab`. If the user does not provide a value, tell them that the skill will use the default `sarthy_lab`.
 - Whether the user has a custom Nextflow configuration. If so, ask for its path or contents.
 - A very short project ID suitable for a scratch-directory name.
 - The name of the mamba environment containing Nextflow.
+- Ask whether to run the moving `dev` branch or the reproducible `1.1.0` release tag. Default to `1.1.0` when the user has no preference.
 
 Do not guess sample names, BAM paths, the project ID, or the mamba environment. Permit an empty `pbi` value. Check that the project directory and supplied input/config paths exist, and report missing paths before generating dependent files.
 
@@ -39,7 +40,7 @@ Write `pipeline_params/sasquatch-cpu-pacvar.config`.
 
 - If the user supplies a custom config, copy it as the starting point.
 - Otherwise, download the PacVar template from `https://raw.githubusercontent.com/chaochaowong/sasquatch-nf-config/main/sasquatch-cpu-pacvar.config`.
-- Set both `params.assoc` and `params.account` to the selected association name.
+- If the user provides an association name, edit both `params.assoc` and `params.account` in the config file to that exact value. If the user does not provide one, set both parameters to the default `sarthy_lab`.
 - Preserve the template's Slurm `partition` value unless the user explicitly requests another partition. The association/account and partition are different settings; do not replace the partition with the association name.
 - Preserve all unrelated custom settings.
 
@@ -53,12 +54,17 @@ Customize it as follows:
 - Set `PROJECT_ID` to the user's short project ID.
 - Set `BASE` to the absolute starting project directory.
 - Set `WORKDIR` to `/data/hps/assoc/private/<assoc>/user/${USER}/tmp/<PROJECT_ID>` using the selected association and project ID. Preserve `${USER}` as a shell variable; do not substitute the current agent's username.
+- Set the `-r` argument for `nf-core/pacvar` to the selected revision (`dev` or `1.1.0`).
 - Keep `--outdir "${BASE}"` because the starting project directory is the pipeline output directory.
 - Keep the samplesheet at `${BASE}/pipeline_params/nf-sample-sheet.csv`.
 - Make the config path robust to the launch location, preferably by resolving the script's own directory and passing its `sasquatch-cpu-pacvar.config` to `-c`.
 - Preserve other pipeline parameters from the template unless the user requests edits.
 
-Make `run-pacvar.sh` executable.
+Make `run-pacvar.sh` executable for all users:
+
+```bash
+chmod a+x pipeline_params/run-pacvar.sh
+```
 
 ## Validate and review
 
@@ -69,6 +75,13 @@ Before asking the user to run the pipeline:
 3. Run `bash -n pipeline_params/run-pacvar.sh`.
 4. Confirm that `PROJECT`, `PROJECT_ID`, `BASE`, `WORKDIR`, the config path, the input path, and the output path have the intended values.
 5. Check Nextflow with `mamba run -n <environment> nextflow -version`. If it is unavailable, tell the user that Nextflow must be installed in that environment; do not silently choose or modify another environment.
+6. Confirm that `run-pacvar.sh` uses `-r 1.1.0` by default. Because the script runs the remote `nf-core/pacvar` project, do not require a separate pull for this tagged release. If the user selects `-r dev`, remind them that their cached development branch may be stale and that they should consider refreshing it before the run:
+
+   ```bash
+   mamba run -n <environment> nextflow pull nf-core/pacvar -r dev
+   ```
+
+   Present this as a recommendation rather than running it automatically or requiring it to succeed. Keep `-r dev` in `run-pacvar.sh` when the user selects the development branch.
 
 Summarize the generated files and ask the user to inspect everything in `pipeline_params`. Ask whether they want to change any paths, configuration, or PacVar parameters. Apply requested edits and repeat the relevant validation.
 

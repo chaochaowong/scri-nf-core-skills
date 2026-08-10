@@ -14,10 +14,18 @@ Each skill will guide users through locating or constructing the files and envir
 Detailed setup, validation, and execution instructions will be maintained in each pipeline directory rather than in this README.
 
 ## Getting started
-Before running an nf-core pipeline, users should create a directory on your 'assoc' space with a meaningful, self-contained name that includes the Benchling ID, cell line, treatment, sequencing assay (such as RNA-seq or CUT&RUN), and sequencing run date.
+Before running an nf-core pipeline, users should create a directory on your 'assoc' space with a meaningful, self-contained name that includes the Benchling ID, cell line, treatment, sequencing assay (such as RNA-seq or CUT&RUN), and sequencing run date. This is essential if using CodeX.
 
 ```text
 <benchling-id/project-id>_<cell-line>_<treatment>_<assay>_<YYYY-MM-DD>
 ```
 
 This directory will be the output directory for the Nextflow pipeline. Users should provide its path to the AI agent.
+
+## `nf-core/pacvar` workflow
+
+When the `pacvar` skill is used, the AI agent will:
+
+1. Ask for the project directory, association name, sample names and BAM/PBI paths, short project ID, custom config, mamba environment, and pipeline revision.
+2. Create and validate `pipeline_params/nf-sample-sheet.csv`, `sasquatch-cpu-pacvar.config`, and `run-pacvar.sh`.
+3. After user approval, run `run-pacvar.sh` with Nextflow in the selected mamba environment and a named tmux session.

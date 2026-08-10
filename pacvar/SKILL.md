@@ -5,11 +5,11 @@ description: Prepare an nf-core/pacvar run on the SCRI Sasquatch HPC cluster. Us
 
 # Prepare PacVar on Sasquatch
 
-Prepare all run files inside the user's existing project directory. Treat that starting project directory as the pipeline output directory; do not create a separate results directory.
+Prepare all run files inside the user's existing project directory. Treat that starting project directory as the pipeline output directory; do not create a separate results directory. Require the project directory to be in Sasquatch association storage under `/data/hps/assoc/` because it becomes `BASE` in `run-pacvar.sh`.
 
 ## Gather inputs
 
-Confirm the starting project directory, then gather the following information. Ask for missing items together when practical.
+Ask the user to provide the starting project directory in Sasquatch association storage under `/data/hps/assoc/`. Do not accept a project directory outside that path; explain the requirement and ask for a valid association-space directory instead. Then gather the following information. Ask for missing items together when practical.
 
 - Sample name, absolute HiFi BAM path, and optional absolute BAM `.pbi` path for every sample.
 - Ask: "What is your Sasquatch association (`assoc`) name?" For example, `sarthy_lab`. If the user does not provide a value, tell them that the skill will use the default `sarthy_lab`.
@@ -52,8 +52,8 @@ Customize it as follows:
 
 - Set `PROJECT` to the basename of the starting project directory.
 - Set `PROJECT_ID` to the user's short project ID.
-- Set `BASE` to the absolute starting project directory.
-- Set `WORKDIR` to `/data/hps/assoc/private/<assoc>/user/${USER}/tmp/<PROJECT_ID>` using the selected association and project ID. Preserve `${USER}` as a shell variable; do not substitute the current agent's username.
+- Set `BASE` to the absolute starting project directory. Require it to begin with `/data/hps/assoc/`; stop and ask the user for an association-space project directory if it does not.
+- Set `WORKDIR` to `/data/hps/assoc/private/<assoc>/user/${USER}/tmp/<PROJECT_ID>` using the selected association and project ID. Require it to remain under `/data/hps/assoc/`. Preserve `${USER}` as a shell variable; do not substitute the current agent's username.
 - Set the `-r` argument for `nf-core/pacvar` to the selected revision (`dev` or `1.1.0`).
 - Keep `--outdir "${BASE}"` because the starting project directory is the pipeline output directory.
 - Keep the samplesheet at `${BASE}/pipeline_params/nf-sample-sheet.csv`.
@@ -73,7 +73,7 @@ Before asking the user to run the pipeline:
 1. Confirm that the samplesheet header is exactly `sample,bam,pbi`, every row has three fields, every sample name is present, and every supplied path exists.
 2. Confirm that the config contains the selected association in both `params.assoc` and `params.account` and that the Slurm partition remains valid.
 3. Run `bash -n pipeline_params/run-pacvar.sh`.
-4. Confirm that `PROJECT`, `PROJECT_ID`, `BASE`, `WORKDIR`, the config path, the input path, and the output path have the intended values.
+4. Confirm that `PROJECT`, `PROJECT_ID`, `BASE`, `WORKDIR`, the config path, the input path, and the output path have the intended values. Verify that both `BASE` and `WORKDIR` begin with `/data/hps/assoc/` and that `WORKDIR` contains the selected association name.
 5. Check Nextflow with `mamba run -n <environment> nextflow -version`. If it is unavailable, tell the user that Nextflow must be installed in that environment; do not silently choose or modify another environment.
 6. Confirm that `run-pacvar.sh` uses `-r 1.1.0` by default. Because the script runs the remote `nf-core/pacvar` project, do not require a separate pull for this tagged release. If the user selects `-r dev`, remind them that their cached development branch may be stale and that they should consider refreshing it before the run:
 

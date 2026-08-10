@@ -1,6 +1,6 @@
-# SCRI nf-core Skills
+# SCRI nf-core Agent Skills
 
-This repository contains Codex or Gemini skills for preparing and running nf-core pipelines in the Seattle Children's Research Institute (SCRI) Sasquatch HPC environment.
+This repository contains AI-agent (Codex or Gemini) skills for preparing and running nf-core pipelines in the Seattle Children's Research Institute (SCRI) Sasquatch HPC environment.
 
 Each supported nf-core pipeline has its own directory and `SKILL.md`. Planned pipeline-specific skills include PacVar, ATAC-seq, and CUT&RUN.
 

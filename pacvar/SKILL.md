@@ -1,6 +1,6 @@
 ---
 name: pacvar
-description: Prepare an nf-core/pacvar run on the SCRI Sasquatch HPC cluster. Use when Codex needs to collect PacBio HiFi BAM inputs, build the PacVar samplesheet and Sasquatch Nextflow configuration, create run-pacvar.sh, validate PacVar run files, or guide a user through launching nf-core/pacvar from a mamba environment in tmux.
+description: Prepare and launch an nf-core/pacvar run on the SCRI Sasquatch HPC cluster. Use when Codex needs to collect PacBio HiFi BAM inputs, build the PacVar samplesheet and Sasquatch Nextflow configuration, create run-pacvar.sh, validate PacVar run files, or run nf-core/pacvar from a mamba environment in tmux.
 ---
 
 # Prepare PacVar on Sasquatch
@@ -15,10 +15,37 @@ Ask the user to provide the starting project directory in Sasquatch association 
 - Ask: "What is your Sasquatch association (`assoc`) name?" For example, `sarthy_lab`. If the user does not provide a value, tell them that the skill will use the default `sarthy_lab`.
 - Whether the user has a custom Nextflow configuration. If so, ask for its path or contents.
 - A very short project ID suitable for a scratch-directory name.
-- The name of the mamba environment containing Nextflow.
+- The name of the mamba environment containing Nextflow. If the user does not know or does not have one, offer to create the standard environment described below.
 - Ask whether to run the moving `dev` branch or the reproducible `1.1.0` release tag. Default to `1.1.0` when the user has no preference.
 
 Do not guess sample names, BAM paths, the project ID, or the mamba environment. Permit an empty `pbi` value. Check that the project directory and supplied input/config paths exist, and report missing paths before generating dependent files.
+
+## Ensure a Nextflow environment
+
+If the user does not know which mamba environment to use, first locate mamba and inspect the existing environments. If no suitable environment is found, offer to create `nextflow_25.10_env` with Nextflow 25.10.4, which satisfies the minimum Nextflow version required by nf-core/pacvar 1.1.0.
+
+Ask for explicit confirmation before creating the environment. After approval:
+
+1. Check whether `nextflow_25.10_env` already exists. Do not overwrite or recreate an existing environment.
+2. If it does not exist, run the equivalent of:
+
+   ```bash
+   mamba create -n nextflow_25.10_env \
+     -c conda-forge \
+     -c bioconda \
+     nextflow=25.10.4 \
+     --yes
+   ```
+
+   Use the resolved mamba executable path. Do not add unrelated packages.
+3. Verify the installed version:
+
+   ```bash
+   mamba run -n nextflow_25.10_env nextflow -version
+   ```
+
+4. Require the output to report Nextflow 25.10.4. If the existing environment contains a different version, report it and ask whether the user wants to update that environment or choose another one; do not modify it without approval.
+5. Use `nextflow_25.10_env` as the selected environment for the remaining validation and launch steps.
 
 ## Create the run files
 
@@ -74,7 +101,7 @@ Before asking the user to run the pipeline:
 2. Confirm that the config contains the selected association in both `params.assoc` and `params.account` and that the Slurm partition remains valid.
 3. Run `bash -n pipeline_params/run-pacvar.sh`.
 4. Confirm that `PROJECT`, `PROJECT_ID`, `BASE`, `WORKDIR`, the config path, the input path, and the output path have the intended values. Verify that both `BASE` and `WORKDIR` begin with `/data/hps/assoc/` and that `WORKDIR` contains the selected association name.
-5. Check Nextflow with `mamba run -n <environment> nextflow -version`. If it is unavailable, tell the user that Nextflow must be installed in that environment; do not silently choose or modify another environment.
+5. Locate mamba with `command -v mamba`, confirm the named environment with `mamba env list`, and check Nextflow with `mamba run -n <environment> nextflow -version`. Retain the resolved mamba executable path for the tmux launch. If mamba, the environment, or Nextflow is unavailable, report which item is missing; do not silently choose or modify another environment.
 6. Confirm that `run-pacvar.sh` uses `-r 1.1.0` by default. Because the script runs the remote `nf-core/pacvar` project, do not require a separate pull for this tagged release. If the user selects `-r dev`, remind them that their cached development branch may be stale and that they should consider refreshing it before the run:
 
    ```bash
@@ -85,10 +112,38 @@ Before asking the user to run the pipeline:
 
 Summarize the generated files and ask the user to inspect everything in `pipeline_params`. Ask whether they want to change any paths, configuration, or PacVar parameters. Apply requested edits and repeat the relevant validation.
 
-## Hand off the run
+## Launch the pipeline when requested
 
-Do not launch the pipeline on the user's behalf unless they explicitly request it. After the user approves the files, instruct them to open or attach to a `tmux` session, activate the named mamba environment, change to the `pipeline_params` directory, and run:
+Do not launch the pipeline until both conditions are satisfied:
 
-```bash
-./run-pacvar.sh
-```
+1. The user has confirmed that `nf-sample-sheet.csv`, `sasquatch-cpu-pacvar.config`, and `run-pacvar.sh` are correct.
+2. The user explicitly asks the agent to run the pipeline.
+
+When both conditions are satisfied:
+
+1. Confirm that `tmux` and the discovered `mamba` executable are available. Re-run the file and environment validations if the files have changed since approval.
+2. Use the user-defined short project ID as the tmux session name. Validate that it is safe as a tmux name. Do not kill, replace, or reuse an existing session with that name without asking the user; check first with `tmux has-session -t <PROJECT_ID>`.
+3. Create a detached tmux session named `<PROJECT_ID>` with a window named `nextflow`. Start it in `<project-directory>/pipeline_params`.
+4. Invoke the user-provided mamba environment and run `./run-pacvar.sh` in the `nextflow` window. Prefer `mamba run` for reliable non-interactive environment invocation. The resulting command should be equivalent to:
+
+   ```bash
+   tmux new-session -d \
+     -s <PROJECT_ID> \
+     -n nextflow \
+     -c <project-directory>/pipeline_params \
+     'mamba run -n <environment> ./run-pacvar.sh'
+   ```
+
+   Use safely quoted literal values and the discovered mamba executable path when constructing the real command.
+5. Verify the launch with `tmux has-session -t <PROJECT_ID>`, `tmux list-windows -t <PROJECT_ID>`, and a read-only capture of the `nextflow` pane. Report any immediate error; do not claim that the pipeline is running successfully based only on session creation.
+6. Explicitly tell the user that the tmux session name is `<PROJECT_ID>` and the window name is `nextflow`. Provide the command to attach to the session:
+
+   ```bash
+   tmux attach -t <PROJECT_ID>
+   ```
+
+   Also provide a read-only command for viewing the latest output from the `nextflow` window without attaching:
+
+   ```bash
+   tmux capture-pane -p -t <PROJECT_ID>:nextflow
+   ```

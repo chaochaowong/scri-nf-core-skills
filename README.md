@@ -16,8 +16,9 @@ Detailed setup, validation, and execution instructions will be maintained in eac
 ## Getting started
 Before running an nf-core pipeline, users should create a directory on your 'assoc' space with a meaningful, self-contained name that includes the Benchling ID, cell line, treatment, sequencing assay (such as RNA-seq or CUT&RUN), and sequencing run date. This is essential if using CodeX.
 
+Project directory naming example:
 ```text
-<benchling-id/project-id>_<cell-line>_<treatment>_<assay>_<YYYY-MM-DD>
+<benchling-id/project-id>_<cell-line>_<treatment/codition/tumor-type>_<assay>_<YYYY-MM-DD>
 ```
 
 This directory will be the output directory for the Nextflow pipeline. Users should provide its path to the AI agent.

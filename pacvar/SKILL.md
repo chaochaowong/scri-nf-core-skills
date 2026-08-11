@@ -5,11 +5,11 @@ description: Prepare and launch an nf-core/pacvar run on the SCRI Sasquatch HPC 
 
 # Prepare pacvar on Sasquatch
 
-Prepare all run files inside the user's existing project directory. Treat that starting project directory as the pipeline output directory; do not create a separate results directory. Require the project directory to be in Sasquatch association storage under `/data/hps/assoc/` because it becomes `BASE` in `run-pacvar.sh`.
+Prepare all run files inside the user's existing project directory. Treat that starting project directory as the pipeline output directory; do not create a separate results directory. Before validating or using a user-supplied project path, resolve every symbolic-link component to its canonical physical path. Use that resolved path throughout the workflow because Nextflow on Sasquatch may fail when given a symlinked project path. Require the resolved project directory to be in Sasquatch association storage under `/data/hps/assoc/` because it becomes `BASE` in `run-pacvar.sh`.
 
 ## Gather inputs
 
-Ask the user to provide the starting project directory in Sasquatch association storage under `/data/hps/assoc/`. Do not accept a project directory outside that path; explain the requirement and ask for a valid association-space directory instead. Then gather the following information. Ask for missing items together when practical.
+Ask the user to provide the starting project directory. Resolve it with `realpath -e -- <project-directory>` (or an equivalent canonical-path operation) before performing the `/data/hps/assoc/` check. If resolution fails, report that the directory does not exist and ask for a valid path. If the resolved path differs from the supplied path, tell the user that the symlinked path has been converted to its physical path for Nextflow compatibility. From that point onward, treat the resolved path as the starting project directory: use it for file creation, validation, `BASE`, launch working directories, and user-facing commands. Do not create a hard link; directories generally cannot be hard-linked, and canonical path resolution is the intended operation. Do not accept a resolved project directory outside `/data/hps/assoc/`; explain the requirement and ask for a valid association-space directory instead. Then gather the following information. Ask for missing items together when practical.
 
 - Sample name, absolute HiFi BAM path, and optional absolute BAM `.pbi` path for every sample.
 - Ask: "What is your Sasquatch association (`assoc`) name?" For example, `sarthy_lab`. If the user does not provide a value, tell them that the skill will use the default `sarthy_lab`.

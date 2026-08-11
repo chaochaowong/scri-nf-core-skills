@@ -1,9 +1,9 @@
 ---
 name: pacvar
-description: Prepare and launch an nf-core/pacvar run on the SCRI Sasquatch HPC cluster. Use when Codex needs to collect PacBio HiFi BAM inputs, build the PacVar samplesheet and Sasquatch Nextflow configuration, create run-pacvar.sh, validate PacVar run files, or run nf-core/pacvar from a mamba environment in tmux.
+description: Prepare and launch an nf-core/pacvar run on the SCRI Sasquatch HPC cluster. Use when Codex needs to collect PacBio HiFi BAM inputs, build the pacvar samplesheet and Sasquatch Nextflow configuration, create run-pacvar.sh, validate pacvar run files, or run nf-core/pacvar from a mamba environment in tmux.
 ---
 
-# Prepare PacVar on Sasquatch
+# Prepare pacvar on Sasquatch
 
 Prepare all run files inside the user's existing project directory. Treat that starting project directory as the pipeline output directory; do not create a separate results directory. Require the project directory to be in Sasquatch association storage under `/data/hps/assoc/` because it becomes `BASE` in `run-pacvar.sh`.
 
@@ -66,7 +66,7 @@ Write one row per supplied sample. Use the absolute HiFi BAM and `.pbi` paths. L
 Write `pipeline_params/sasquatch-cpu-pacvar.config`.
 
 - If the user supplies a custom config, copy it as the starting point.
-- Otherwise, download the PacVar template from `https://raw.githubusercontent.com/chaochaowong/sasquatch-nf-config/main/sasquatch-cpu-pacvar.config`.
+- Otherwise, download the pacvar template from `https://raw.githubusercontent.com/chaochaowong/sasquatch-nf-config/main/sasquatch-cpu-pacvar.config`.
 - If the user provides an association name, edit both `params.assoc` and `params.account` in the config file to that exact value. If the user does not provide one, set both parameters to the default `sarthy_lab`.
 - Preserve the template's Slurm `partition` value unless the user explicitly requests another partition. The association/account and partition are different settings; do not replace the partition with the association name.
 - Preserve all unrelated custom settings.
@@ -110,7 +110,7 @@ Before asking the user to run the pipeline:
 
    Present this as a recommendation rather than running it automatically or requiring it to succeed. Keep `-r dev` in `run-pacvar.sh` when the user selects the development branch.
 
-Summarize the generated files and ask the user to inspect everything in `pipeline_params`. Ask whether they want to change any paths, configuration, or PacVar parameters. Apply requested edits and repeat the relevant validation.
+Summarize the generated files and ask the user to inspect everything in `pipeline_params`. Ask whether they want to change any paths, configuration, or pacvar parameters. Apply requested edits and repeat the relevant validation.
 
 ## Launch the pipeline when requested
 

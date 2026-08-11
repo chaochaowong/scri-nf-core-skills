@@ -22,7 +22,7 @@ Before running an nf-core pipeline, users should create a directory on your 'ass
 
 This directory will be the output directory for the Nextflow pipeline. Users should provide its path to the AI agent.
 
-## `nf-core/pacvar` workflow
+## `pacvar` AI-agent workflow
 
 ![nf-core/pacvar workflow](assets/images/pacvar-workflow.png)
 

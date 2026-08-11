@@ -17,6 +17,7 @@ Ask the user to provide the starting project directory. Resolve it with `realpat
 - A very short project ID suitable for a scratch-directory name.
 - The name of the mamba environment containing Nextflow. If the user does not know or does not have one, offer to create the standard environment described below.
 - Ask whether to run the moving `dev` branch or the reproducible `1.1.0` release tag. Default to `1.1.0` when the user has no preference.
+- Ask whether the user wants to change the launch script's `--genome` parameter. Preserve the template value when they do not request a change.
 
 Do not guess sample names, BAM paths, the project ID, or the mamba environment. Permit an empty `pbi` value. Check that the project directory and supplied input/config paths exist, and report missing paths before generating dependent files.
 
@@ -82,6 +83,7 @@ Customize it as follows:
 - Set `BASE` to the absolute starting project directory. Require it to begin with `/data/hps/assoc/`; stop and ask the user for an association-space project directory if it does not.
 - Set `WORKDIR` to `/data/hps/assoc/private/<assoc>/user/${USER}/tmp/<PROJECT_ID>` using the selected association and project ID. Require it to remain under `/data/hps/assoc/`. Preserve `${USER}` as a shell variable; do not substitute the current agent's username.
 - Set the `-r` argument for `nf-core/pacvar` to the selected revision (`dev` or `1.1.0`).
+- If the selected revision is `1.1.0` and the user sets `--genome CHM13`, also set `--skip_ensemblvep true`. This is mandatory because the Ensembl VEP integration in pacvar 1.1.0 cannot handle CHM13. Explain that VEP annotation will be skipped for this combination. Use the exact parameter name `skip_ensemblvep`; do not use the misspellings `skip_ensemblvel` or `skip_ensemblvep:`. Do not impose this revision-specific rule on `dev` without first checking the selected revision's current compatibility.
 - Keep `--outdir "${BASE}"` because the starting project directory is the pipeline output directory.
 - Keep the samplesheet at `${BASE}/pipeline_params/nf-sample-sheet.csv`.
 - Make the config path robust to the launch location, preferably by resolving the script's own directory and passing its `sasquatch-cpu-pacvar.config` to `-c`.
@@ -109,6 +111,7 @@ Before asking the user to run the pipeline:
    ```
 
    Present this as a recommendation rather than running it automatically or requiring it to succeed. Keep `-r dev` in `run-pacvar.sh` when the user selects the development branch.
+7. If `run-pacvar.sh` combines `-r 1.1.0` with `--genome CHM13`, require `--skip_ensemblvep true` and report an error if it is absent, false, or misspelled.
 
 Summarize the generated files and ask the user to inspect everything in `pipeline_params`. Ask whether they want to change any paths, configuration, or pacvar parameters. Apply requested edits and repeat the relevant validation.
 

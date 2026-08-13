@@ -1,6 +1,6 @@
 ---
 name: pacvar
-description: Prepare and launch an nf-core/pacvar run on the SCRI Sasquatch HPC cluster. Use when Codex needs to collect PacBio HiFi BAM inputs, build the pacvar samplesheet and Sasquatch Nextflow configuration, create run-pacvar.sh, validate pacvar run files, or run nf-core/pacvar from a mamba environment in tmux.
+description: Prepare, launch, archive, and perform downstream analysis of an nf-core/pacvar run on the SCRI Sasquatch HPC cluster. Use when Codex needs to collect PacBio HiFi BAM inputs, build or validate pacvar run files, run nf-core/pacvar from a mamba environment in tmux, copy completed output to Helen active RSS, analyze VEP-annotated VCF files, or use Sasquatch Apptainer/Singularity and R containers for pacvar downstream work.
 ---
 
 # Prepare pacvar on Sasquatch
@@ -18,8 +18,9 @@ Ask the user to provide the starting project directory. Resolve it with `realpat
 - The name of the mamba environment containing Nextflow. If the user does not know or does not have one, offer to create the standard environment described below.
 - Ask whether to run the moving `dev` branch or the reproducible `1.1.0` release tag. Default to `1.1.0` when the user has no preference.
 - Ask whether the user wants to change the launch script's `--genome` parameter. Preserve the template value when they do not request a change.
+- Ask for the Helen active Research Storage Server (RSS) destination to which the completed project should be copied. Active Helen paths usually begin with `/data/rss/helens/`. Permit the user to defer this choice, but record the destination before performing a post-run copy.
 
-Do not guess sample names, BAM paths, the project ID, or the mamba environment. Permit an empty `pbi` value. Check that the project directory and supplied input/config paths exist, and report missing paths before generating dependent files.
+Do not guess sample names, BAM paths, the project ID, the mamba environment, or an RSS destination. Permit an empty `pbi` value. Check that the project directory and supplied input/config paths exist, and report missing paths before generating dependent files. When an RSS destination is supplied, require it to begin with `/data/rss/helens/` and resolve or validate it without creating a guessed directory hierarchy.
 
 ## Ensure a Nextflow environment
 
@@ -150,3 +151,30 @@ When both conditions are satisfied:
    ```bash
    tmux capture-pane -p -t <PROJECT_ID>:nextflow
    ```
+
+## Handle completed output
+
+Treat `<project-directory>/annotation/vep` as the standard location for VEP-annotated variant VCF files. Before downstream work or archival, verify from Nextflow's final status and logs that the pipeline completed successfully; a missing tmux session alone does not prove success. If `--skip_ensemblvep true` was used, do not expect VEP-annotated VCFs and explain why the directory or files may be absent.
+
+### Copy the project to Helen
+
+After successful completion, offer to copy the entire project to the previously supplied Helen active RSS destination. Treat this as a separate data-transfer action: show the resolved source and destination and obtain explicit confirmation immediately before starting it. Confirm that GNU `parallel`, `rsync`, the source project, and the destination are accessible. Then run the equivalent of:
+
+```bash
+find <project-directory> -type f -print0 \
+  | parallel -0 -j 8 --progress rsync -R -- {} <active-rss-destination>
+```
+
+Use null-delimited filenames so paths containing spaces or shell metacharacters remain intact. Preserve `rsync -R` so relative source paths are recreated beneath the destination. Do not delete source files. Check the command's exit status, report failures, and do not claim that the copy completed unless all jobs succeeded.
+
+### Perform downstream analysis
+
+Inspect the VCFs under `<project-directory>/annotation/vep` and clarify the requested analysis, expected outputs, reference genome, and sample scope before changing or filtering them. Preserve the original pipeline outputs; write derived files to a clearly named downstream-analysis directory unless the user specifies another location.
+
+Prefer existing software containers over installing tools into the host environment:
+
+- Search `/data/hps/assoc/private/<assoc>/container` for suitable Apptainer or Singularity images. For example, use `/data/hps/assoc/private/sarthy_lab/container` when the association is `sarthy_lab`. Inspect candidate image names and metadata before choosing one; do not assume a similarly named image contains the required tool or version.
+- For R or Bioconductor work, look under `/data/hps/assoc/public/bioinformatics/container/R` and prefer `bioconductor_latex_RELEASE_3_19.sif` when it meets the requested package and version requirements. Verify that the image exists and inspect the available R/package versions before analysis. If required packages are absent, explain the gap and agree on a non-destructive installation or alternate image with the user.
+- When the user specifically requests deepTools, first search the association container directory for an existing suitable image. If none exists, use the Seqera ORAS image `oras://community.wave.seqera.io/library/pip_deeptools:708076a05ff4636a` and store it under `/data/hps/assoc/private/<assoc>/container`. Confirm the exact output filename and obtain approval before downloading the image. Verify the pulled image and deepTools version before using it.
+
+Use `apptainer` when available and fall back to `singularity`. Bind only the project, required input/reference locations, and output locations needed for the task. Show the user the proposed command before a long-running or output-producing downstream analysis, then validate the resulting files rather than relying only on the container command's exit status.

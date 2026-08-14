@@ -25,10 +25,11 @@ This directory will be the output directory for the Nextflow pipeline. Users sho
 
 ## `pacvar` AI-agent workflow
 
-![nf-core/pacvar workflow](assets/images/pacvar-workflow.png)
+![nf-core/pacvar workflow](assets/images/pacvar-agentic-workflow.jpg)
 
 When the `pacvar` skill is used, the AI agent will:
 
-1. Ask for the project directory, association name, sample names and BAM/PBI paths, short project ID, custom config, mamba environment, assoc name, and pipeline revision.
-2. Create and validate `pipeline_params/nf-sample-sheet.csv`, `sasquatch-cpu-pacvar.config`, and `run-pacvar.sh`.
+1. Ask for the project directory, association (`assoc`) name, sample names and BAM/PBI paths, short project ID, custom config, mamba environment, Helen active RSS destination, and pipeline revision.
+2. Create and validate `pipeline_params/nf-sample-sheet.csv`, `sasquatch-cpu-pacvar.config`, and `run-pacvar.sh`. Users should review the parameters in `run-pacvar.sh` and make any necessary changes before approving the pipeline launch.
 3. After user approval, run `run-pacvar.sh` with Nextflow in the selected mamba environment and a named tmux session.
+4. After confirming that the pipeline completed successfully, offer to copy the project to the designated Helen active RSS destination. Any cleanup of the temporary Nextflow work directory and tmux session requires user approval.

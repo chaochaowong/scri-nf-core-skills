@@ -1,4 +1,4 @@
 interface:
   display_name: "pacvar on Sasquatch"
-  short_description: "Run and analyze nf-core/pacvar on Sasquatch"
-  default_prompt: "Use $pacvar to prepare, run, archive, or analyze my nf-core/pacvar project on Sasquatch."
+  short_description: "Run nf-core/pacvar on Sasquatch"
+  default_prompt: "Use $pacvar to prepare, run, archive, or analyze PacBio long-read WGS project using nf-core/pacvar on Sasquatch."

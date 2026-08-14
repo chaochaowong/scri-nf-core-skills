@@ -23,7 +23,7 @@ Project directory naming example:
 
 This directory will be the output directory for the Nextflow pipeline. Users should provide its path to the AI agent.
 
-## `pacvar` AI-agent workflow
+## `pacvar` AI-agentic workflow
 
 ![nf-core/pacvar workflow](assets/images/pacvar-agentic-workflow.jpg)
 

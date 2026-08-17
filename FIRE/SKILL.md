@@ -1,6 +1,6 @@
 ---
 name: fire
-description: Prepare and run the FIRE chromatin-accessibility pipeline on SCRI Sasquatch from nf-core/pacvar fibertools output. Use when Codex needs to locate a fibertools BAM in a pacvar result, install or validate Snakemake, clone or validate the SCRI FIRE repository, create FIRE pipeline_config files, or launch FIRE with the Sasquatch Slurm profile.
+description: Prepare, run, and archive the FIRE chromatin-accessibility pipeline on SCRI Sasquatch from nf-core/pacvar fibertools output. Use when Codex needs to locate a fibertools BAM in a pacvar result, install or validate Snakemake, clone or validate the SCRI FIRE repository, create FIRE pipeline_config files, launch FIRE with the Sasquatch Slurm profile, or copy completed FIRE results beside an archived pacvar project on Helen RSS.
 ---
 
 # Run FIRE on Sasquatch
@@ -16,6 +16,7 @@ Ask for all missing values together when practical:
 - Absolute path to a mamba/conda environment containing Snakemake, or confirmation that none exists.
 - Existing FIRE repository path in association space and preferred branch, if any. Explain that execution on SCRI must use the `scri` branch even if another branch is preferred elsewhere.
 - Absolute reference-genome FASTA path and short reference name, such as `hg38`.
+- The absolute Helen active RSS destination where the whole pacvar project was deposited (or will be deposited). Ask for this at the beginning with the other required inputs. This is the parent directory beneath which the completed `FIRE` directory will be copied.
 
 Use the current shell user through `${USER}` in generated commands; do not substitute the agent's username into reusable files.
 
@@ -152,4 +153,30 @@ Before offering to launch:
 5. Run a Snakemake dry run from `FIRE_OUTPUT` with the same Snakefile, profile, config, and conda-prefix arguments when doing so will not submit jobs. If the profile makes dry-run submission ambiguous, omit the profile for validation or ask before proceeding.
 6. Summarize the three created files and any warnings. Ask the user to review them.
 
-Do not launch FIRE until the user explicitly confirms the generated files and asks for the run. When requested, run `run-fire.sh` from `FIRE_OUTPUT`, pass through any user arguments, and report the actual command and immediate status. For a long-running job, use the user's requested session mechanism or ask whether they prefer `tmux` or another supported launcher.
+## Launch after approval
+
+Do not launch FIRE until the user explicitly confirms that `pipeline_config/config.tbl`, `pipeline_config/config.yaml`, and `pipeline_config/run-fire.sh` are valid. Treat that confirmation as authorization to run the confirmed `run-fire.sh`; ask again only if files or material paths change afterward.
+
+Immediately before launch, repeat the relevant file, environment, repository-branch, and shell-syntax checks. Run `pipeline_config/run-fire.sh` with `FIRE_OUTPUT` as the working directory, pass through any user-provided arguments, and report the actual command and immediate status. For a long-running run, use the user's requested session mechanism or ask whether they prefer `tmux` or another supported launcher. Report how to inspect or attach to the run. Do not equate successful process or session creation with successful pipeline completion.
+
+## Copy completed FIRE output to Helen RSS
+
+Offer the copy only after verifying from Snakemake's exit status and logs that FIRE completed successfully. Copy only `<resolved-pacvar-output>/FIRE`; do not recopy the entire pacvar project.
+
+Use the user-provided pacvar project destination on Helen active RSS as the parent destination. If that exact path was already recorded during the pacvar workflow, show it when gathering inputs and ask the user to confirm it; otherwise, ask for it at the beginning. Require the path to begin with `/data/rss/helens/`, resolve the nearest existing parent safely, and ensure that the destination corresponds to the same pacvar project. Do not infer a destination merely from matching basenames. If the user cannot provide it initially, record the item as unresolved and do not perform the RSS copy until they supply it.
+
+Set the destination to `<rss-pacvar-project>/FIRE`. Before copying:
+
+1. Show the canonical source and destination and obtain explicit confirmation immediately before this separate data-transfer action.
+2. Confirm that `rsync` is available, the source is a directory, and the RSS parent is accessible.
+3. If the destination already exists, inspect it and ask whether to merge/update it. Never produce an accidental `FIRE/FIRE` nesting and never delete destination files implicitly.
+4. Copy directory contents with semantics equivalent to:
+
+   ```bash
+   mkdir -p "/data/rss/helens/path/to/pacvar-project/FIRE"
+   rsync -a --info=progress2 \
+     "/data/hps/assoc/path/to/pacvar-output/FIRE/" \
+     "/data/rss/helens/path/to/pacvar-project/FIRE/"
+   ```
+
+5. Check the exit status and compare source and destination file counts and total byte sizes. Report discrepancies; do not claim completion solely from an exit status. Preserve the source and do not use `--delete`.

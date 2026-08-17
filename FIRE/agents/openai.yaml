@@ -1,0 +1,4 @@
+interface:
+  display_name: "FIRE on Sasquatch"
+  short_description: "Prepare and run FIRE from pacvar output"
+  default_prompt: "Use $fire to prepare and run the FIRE pipeline from my pacvar fibertools output on Sasquatch."

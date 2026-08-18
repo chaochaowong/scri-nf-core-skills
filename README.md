@@ -1,6 +1,6 @@
 # SCRI nf-core Agent Skills
 
-This repository contains AI-agent (Codex or Gemini) skills for preparing and running nf-core pipelines in the Seattle Children's Research Institute (SCRI) Sasquatch HPC environment.
+This repository contains AI-agentic (CodeX or Gemini) skills for preparing and running nf-core pipelines in the Seattle Children's Research Institute (SCRI) Sasquatch HPC environment.
 
 Each supported nf-core pipeline has its own directory and `SKILL.md`. Planned pipeline-specific skills include pacvar, ATAC-seq, and CUT&RUN.
 
@@ -36,9 +36,11 @@ When the `pacvar` skill is used, the AI agent will:
 
 ## `FIRE` AI-agentic workflow
 
+![FIRE workflow](assets/images/FIRE-agentic-workflow.jpg)
+
 When the `FIRE` skill is used, the AI agent will:
 
-1. Ask for the pacvar path, locate the fibertools BAM and local genemone fasta file, and create a `FIRE` output directory.
+1. Ask for the pacvar path and local reference-genome FASTA file, locate the fibertools BAM, and create a `FIRE` output directory.
 2. Install or validate the Snakemake mamba environment, then clone or validate the SCRI FIRE repository.
 3. Create and validate `FIRE` config files: `FIRE/pipeline_config/config.tbl`, `FIRE/pipeline_config/config.yaml`, and `FIRE/pipeline_config/run-fire.sh`.
 4. After user approval, launch FIRE with the Sasquatch Slurm profile using `run-fire.sh`. After successful completion, offer to copy the FIRE results beside the archived pacvar project on Helen RSS.

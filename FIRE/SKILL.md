@@ -1,6 +1,6 @@
 ---
-name: fire
-description: Prepare, run, and archive the FIRE chromatin-accessibility pipeline on SCRI Sasquatch from nf-core/pacvar fibertools output. Use when Codex needs to locate a fibertools BAM in a pacvar result, install or validate Snakemake, clone or validate the SCRI FIRE repository, create FIRE pipeline_config files, launch FIRE with the Sasquatch Slurm profile, or copy completed FIRE results beside an archived pacvar project on Helen RSS.
+name: FIRE
+description: Prepare, run, and archive the FIRE chromatin-accessibility pipeline on SCRI Sasquatch from nf-core/pacvar fibertools output. Use when Codex (or other LLM assistants) needs to locate a fibertools BAM in a pacvar result, install or validate Snakemake, clone or validate the SCRI FIRE repository, create FIRE pipeline_config files, launch FIRE with the Sasquatch Slurm profile, or copy completed FIRE results beside an archived pacvar project on Helen RSS.
 ---
 
 # Run FIRE on Sasquatch
@@ -14,7 +14,7 @@ Ask for all missing values together when practical:
 - SCRI association name, such as `sarthy_lab`. If it is not already known from the conversation, ask for it; do not silently default it.
 - Absolute pacvar output path.
 - Absolute path to a mamba/conda environment containing Snakemake, or confirmation that none exists.
-- Existing FIRE repository path in association space and preferred branch, if any. Explain that execution on SCRI must use the `scri` branch even if another branch is preferred elsewhere.
+- Existing FIRE repository path in association space and preferred branch, if any. Recommend the `scri` branch because it is configured for execution on SCRI Sasquatch, but explain the reason and allow the user to select another branch.
 - Absolute reference-genome FASTA path and short reference name, such as `hg38`.
 - The absolute Helen active RSS destination where the whole pacvar project was deposited (or will be deposited). Ask for this at the beginning with the other required inputs. This is the parent directory beneath which the completed `FIRE` directory will be copied.
 
@@ -49,18 +49,18 @@ Require the repository to live in association space. For an existing path:
 
 1. Resolve it and verify that it is a Git checkout of `git@github.com:chaochaowong/FIRE.git` (accept the equivalent GitHub HTTPS remote).
 2. Inspect the working tree before switching branches. Never discard local changes.
-3. Fetch only when needed, then switch to `scri`. If changes prevent switching, stop and ask the user how to handle them.
-4. Verify that the active branch is `scri` and that `workflow/Snakefile` and `profiles/slurm-executor` exist.
+3. Recommend `scri` for SCRI Sasquatch execution and explain that it provides the expected SCRI-specific workflow and Slurm profile. If the user prefers another branch, respect that choice. Fetch only when needed, then switch to the selected branch. If changes prevent switching, stop and ask the user how to handle them.
+4. Verify that the selected branch is active and that `workflow/Snakefile` and `profiles/slurm-executor` exist. If the selected branch lacks the required SCRI files, explain the problem and ask whether to use `scri` or another compatible branch.
 
 When no repository path exists, use this default:
 
 ```bash
 FIRE_PIPELINE_PATH="/data/hps/assoc/private/<assoc>/user/${USER}/.fire"
 git clone git@github.com:chaochaowong/FIRE.git "${FIRE_PIPELINE_PATH}"
-git -C "${FIRE_PIPELINE_PATH}" switch scri
+git -C "${FIRE_PIPELINE_PATH}" switch "<selected-branch>"
 ```
 
-Do not clone over an existing nonempty path. Regardless of another preferred development branch, use `scri` for SCRI execution.
+Use `scri` as `<selected-branch>` by default. If the user requests another branch, use it after explaining why `scri` is recommended and verifying that the requested branch contains the required SCRI workflow and Slurm profile. Do not clone over an existing nonempty path.
 
 ## Validate the reference
 

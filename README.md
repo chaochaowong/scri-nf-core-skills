@@ -33,3 +33,12 @@ When the `pacvar` skill is used, the AI agent will:
 2. Create and validate `pipeline_params/nf-sample-sheet.csv`, `sasquatch-cpu-pacvar.config`, and `run-pacvar.sh`. Users should review the parameters in `run-pacvar.sh` and make any necessary changes before approving the pipeline launch.
 3. After user approval, run `run-pacvar.sh` with Nextflow in the selected mamba environment and a named tmux session.
 4. After confirming that the pipeline completed successfully, offer to copy the project to the designated Helen active RSS destination. Any cleanup of the temporary Nextflow work directory and tmux session requires user approval.
+
+## `FIRE` AI-agentic workflow
+
+When the `FIRE` skill is used, the AI agent will:
+
+1. Ask for the pacvar path, locate the fibertools BAM and local genemone fasta file, and create a `FIRE` output directory.
+2. Install or validate the Snakemake mamba environment, then clone or validate the SCRI FIRE repository.
+3. Create and validate `FIRE` config files: `FIRE/pipeline_config/config.tbl`, `FIRE/pipeline_config/config.yaml`, and `FIRE/pipeline_config/run-fire.sh`.
+4. After user approval, launch FIRE with the Sasquatch Slurm profile using `run-fire.sh`. After successful completion, offer to copy the FIRE results beside the archived pacvar project on Helen RSS.

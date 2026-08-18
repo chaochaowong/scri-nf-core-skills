@@ -1,6 +1,6 @@
 ---
 name: pacvar
-description: Prepare, launch, archive, and perform downstream analysis of an nf-core/pacvar run on the SCRI Sasquatch HPC cluster. Use when Codex needs to collect PacBio HiFi BAM inputs, build or validate pacvar run files, run nf-core/pacvar from a mamba environment in tmux, copy completed output to Helen active RSS, analyze VEP-annotated VCF files, or use Sasquatch Apptainer/Singularity and R containers for pacvar downstream work.
+description: Prepare, launch, archive, and perform downstream analysis of an nf-core/pacvar run on the SCRI Sasquatch HPC cluster. Use when Codex (or other LLM assistants) needs to collect PacBio HiFi BAM inputs, build or validate pacvar run files, run nf-core/pacvar from a mamba environment in tmux, copy completed output to Helen active RSS, analyze VEP-annotated VCF files, or use Sasquatch Apptainer/Singularity and R containers for pacvar downstream work.
 ---
 
 # Prepare pacvar on Sasquatch

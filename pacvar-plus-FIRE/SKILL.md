@@ -35,7 +35,7 @@ Ask for all missing pacvar and FIRE inputs together when practical. Clearly grou
 
 The Helen destination for the completed FIRE directory is the same pacvar project destination. Do not ask for a second unrelated RSS path and do not infer one from basenames. FIRE will be copied to `<rss-pacvar-project>/FIRE`.
 
-### Pacvar inputs
+### pacvar inputs
 
 - Sample name, absolute PacBio HiFi BAM path, and optional absolute `.pbi` path for every sample.
 - Custom Nextflow configuration path or contents, or confirmation that the standard configuration should be used.
@@ -64,7 +64,7 @@ Present the generated files for review. Do not launch pacvar until the user has 
 
 Launch pacvar using the validated tmux and mamba procedure in the pacvar instructions. Report how to attach and inspect output. Monitor or inspect the run as requested, but do not equate tmux session creation, disappearance, or an idle process with pipeline success.
 
-### Pacvar completion gate
+### pacvar completion gate
 
 Before proceeding to FIRE:
 
@@ -81,7 +81,7 @@ If pacvar fails or completion cannot be established, stop the transition and rep
 After the pacvar completion gate passes, set:
 
 ```text
-PACVAR_OUTPUT=<canonical-pacvar-project-directory>
+pacvar_output=<canonical-pacvar-project-directory>
 FIRE_OUTPUT=<canonical-pacvar-project-directory>/FIRE
 FIRE_BAM=<selected-readable-BAM-under-fibertools>
 ```

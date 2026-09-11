@@ -44,3 +44,13 @@ When the `FIRE` skill is used, the AI agent will:
 2. Install or validate the Snakemake mamba environment, then clone or validate the SCRI FIRE repository.
 3. Create and validate `FIRE` config files: `FIRE/pipeline_config/config.tbl`, `FIRE/pipeline_config/config.yaml`, and `FIRE/pipeline_config/run-fire.sh`.
 4. After user approval, launch FIRE with the Sasquatch Slurm profile using `run-fire.sh`. After successful completion, offer to copy the FIRE results beside the archived pacvar project on Helen RSS.
+
+## `pacvar + FIRE` AI-agentic workflow
+
+The `pacvar-plus-FIRE` skill coordinates both pipelines as one ordered workflow. When it is used, the AI agent will:
+
+1. Ask for the shared, pacvar-specific, and FIRE-specific inputs together at the beginning, including the Sasquatch association, project and sample information, Nextflow and Snakemake environments, FIRE repository and reference genome, and Helen active RSS destination.
+2. Prepare and validate the pacvar run files, present them for review, and launch pacvar only after user approval.
+3. Verify that pacvar completed successfully, locate the resulting fibertools BAM, and use that BAM as the input for FIRE. FIRE will not be prepared or launched from incomplete pacvar output.
+4. Prepare and validate the FIRE configuration and launch script, present them for a separate review, and launch FIRE only after user approval.
+5. Verify that FIRE completed successfully, then offer to archive the combined project to Helen active RSS. Data transfers require explicit confirmation and are verified after copying.

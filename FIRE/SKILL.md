@@ -24,11 +24,11 @@ Use the current shell user through `${USER}` in generated commands; do not subst
 
 1. Resolve the pacvar output with `realpath -e` and require it to be a directory under `/data/hps/assoc/`.
 2. Locate its `fibertools` directory case-sensitively first; if absent, report the directories found and ask the user for the correct path. Do not create a fake `fibertools` directory.
-3. Find `.bam` files beneath `fibertools`. If there is not exactly one plausible input, show the candidates and ask the user to select one.
-4. Require the selected BAM to exist and be readable. Set `BAM` to its canonical absolute path and `BAM_BASENAME` to its filename without `.bam`.
-5. Derive `SAMPLE` by removing a terminal `.add_nuc` from `BAM_BASENAME`. Preserve all other characters. For example, `patient01.add_nuc.bam` becomes sample `patient01`; `patient01.bam` remains `patient01`.
+3. Find `.bam` files beneath `fibertools`. Treat BAMs whose basenames end in `snv.phased.add_nuc.bam` as the preferred candidates. If multiple preferred candidates exist, default to including **all** `.bam` files beneath `fibertools` in `config.tbl`; show the complete list that will be included, but do not ask the user to choose a single BAM. Otherwise, if there is not exactly one plausible input, show the candidates and ask the user to select one.
+4. Require every selected BAM to exist and be readable. For each one, use its canonical absolute path as `BAM` and its filename without `.bam` as `BAM_BASENAME`.
+5. For each selected BAM, derive `SAMPLE` by removing a terminal `.add_nuc` from `BAM_BASENAME`. Preserve all other characters. For example, `patient01.add_nuc.bam` becomes sample `patient01`; `patient01.bam` remains `patient01`. Require the resulting sample names to be unique; if two selected BAMs produce the same sample name, report the collision and ask the user how to name them before writing `config.tbl`.
 
-The manifest must point to the existing BAM in `fibertools`; do not copy, rename, or manufacture the BAM unless the user separately asks for that operation.
+Every manifest row must point to an existing BAM in `fibertools`; do not copy, rename, or manufacture BAMs unless the user separately asks for that operation.
 
 ## Ensure Snakemake
 
@@ -81,14 +81,15 @@ Create both directories. Before changing any existing `config.tbl`, `config.yaml
 
 ### Create `config.tbl`
 
-Write a tab-delimited file with exactly this header and one data row:
+Write a tab-delimited file with exactly this header and one data row per selected BAM:
 
 ```text
 sample	bam
-<SAMPLE>	<BAM>
+<SAMPLE_1>	<BAM_1>
+<SAMPLE_2>	<BAM_2>
 ```
 
-Use the derived sample and canonical absolute BAM path. Validate that there are exactly two fields per row.
+Use each derived sample and canonical absolute BAM path. Validate that there are exactly two fields per row, every selected BAM appears exactly once, and sample names are unique. The second example row illustrates the multi-BAM case; do not add it when only one BAM was selected.
 
 ### Create `config.yaml`
 
@@ -146,8 +147,8 @@ Set `FIRE_PIPELINE_PATH`, activation paths, association components, `FIRE_OUTPUT
 
 Before offering to launch:
 
-1. Recheck the BAM, reference, environment, repository branch, Snakefile, and Slurm profile.
-2. Validate `config.tbl` field counts and confirm its sample is the BAM stem with only terminal `.add_nuc` removed.
+1. Recheck every selected BAM, the reference, environment, repository branch, Snakefile, and Slurm profile.
+2. Validate `config.tbl` field counts; confirm that every selected BAM appears exactly once and that each sample is its BAM stem with only terminal `.add_nuc` removed; and reject duplicate sample names.
 3. Parse `config.yaml` when a YAML parser is available and confirm `ref`, `ref_name`, and `manifest` exactly match the selected values.
 4. Run `bash -n run-fire.sh` and inspect every expanded path.
 5. Run a Snakemake dry run from `FIRE_OUTPUT` with the same Snakefile, profile, config, and conda-prefix arguments when doing so will not submit jobs. If the profile makes dry-run submission ambiguous, omit the profile for validation or ask before proceeding.

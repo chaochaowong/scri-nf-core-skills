@@ -1,0 +1,229 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="JRe65 Neuroblastoma structural, small variant, and copy number dashboard">
+  <title>JRe65 Neuroblastoma | Variant overview</title>
+  <style>
+    :root {
+      --navy: #102a43;
+      --ink: #243b53;
+      --muted: #627d98;
+      --paper: #ffffff;
+      --canvas: #f3f7fa;
+      --line: #d9e2ec;
+      --cnv: #147d92;
+      --cnv-pale: #e5f7f8;
+      --snv: #7452a8;
+      --snv-pale: #f1ebfa;
+      --sv: #c05621;
+      --sv-pale: #fff0e8;
+      --shadow: 0 12px 30px rgba(16, 42, 67, .09);
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--canvas);
+      font: 15px/1.55 Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    }
+    a { color: inherit; }
+    .site-header {
+      color: white;
+      background:
+        radial-gradient(circle at 82% 15%, rgba(56, 189, 196, .24), transparent 30%),
+        linear-gradient(125deg, #0b253d, #173f5f 65%, #155e75);
+      border-bottom: 4px solid #41b3bd;
+    }
+    .header-inner, main, footer { width: min(1440px, calc(100% - 40px)); margin: auto; }
+    .header-inner { padding: 27px 0 30px; }
+    .topline { display: flex; align-items: center; justify-content: space-between; gap: 24px; }
+    .eyebrow { margin: 0 0 5px; color: #9ee6eb; font-size: 12px; font-weight: 750; letter-spacing: .14em; text-transform: uppercase; }
+    h1 { margin: 0; font-size: clamp(25px, 3vw, 39px); line-height: 1.12; letter-spacing: -.025em; }
+    .subtitle { margin: 10px 0 0; color: #d9e8f2; }
+    .nav { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
+    .nav a {
+      padding: 8px 12px;
+      border: 1px solid rgba(255,255,255,.3);
+      border-radius: 7px;
+      color: white;
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 650;
+      transition: background .15s, border-color .15s, transform .15s;
+    }
+    .nav a:hover, .nav a:focus-visible { background: rgba(255,255,255,.13); border-color: white; transform: translateY(-1px); }
+    main { padding: 30px 0 34px; }
+    .intro { display: flex; align-items: baseline; justify-content: space-between; gap: 20px; margin-bottom: 17px; }
+    .intro h2 { margin: 0; color: var(--navy); font-size: 18px; }
+    .intro p { margin: 0; color: var(--muted); font-size: 13px; }
+    .panels { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; align-items: start; }
+    .panel { overflow: hidden; background: var(--paper); border: 1px solid var(--line); border-radius: 13px; box-shadow: var(--shadow); }
+    .panel-head { min-height: 127px; padding: 21px 22px 18px; border-bottom: 1px solid var(--line); }
+    .panel.cnv .panel-head { background: linear-gradient(145deg, var(--cnv-pale), #fff); }
+    .panel.snv .panel-head { background: linear-gradient(145deg, var(--snv-pale), #fff); }
+    .panel.sv .panel-head  { background: linear-gradient(145deg, var(--sv-pale), #fff); }
+    .category { display: flex; align-items: center; gap: 9px; margin-bottom: 8px; font-size: 12px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
+    .category::before { content: ""; width: 10px; height: 10px; border-radius: 50%; background: currentColor; box-shadow: 0 0 0 5px currentColor; opacity: .78; }
+    .cnv .category { color: var(--cnv); } .snv .category { color: var(--snv); } .sv .category { color: var(--sv); }
+    .panel h3 { margin: 0; color: var(--navy); font-size: 22px; line-height: 1.2; }
+    .panel-head p { margin: 6px 0 0; color: var(--muted); font-size: 13px; }
+    .panel-body { padding: 20px 22px 23px; }
+    .metrics { display: grid; grid-template-columns: repeat(2, 1fr); gap: 9px; margin-bottom: 21px; }
+    .metrics.three { grid-template-columns: repeat(3, 1fr); }
+    .metric { min-width: 0; padding: 11px 10px; background: #f8fafc; border: 1px solid #e7edf3; border-radius: 8px; text-align: center; }
+    .metric strong { display: block; color: var(--navy); font-size: 23px; line-height: 1.1; font-variant-numeric: tabular-nums; }
+    .metric span { display: block; margin-top: 3px; color: var(--muted); font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
+    .section-title { margin: 0 0 9px; color: var(--navy); font-size: 13px; font-weight: 800; letter-spacing: .055em; text-transform: uppercase; }
+    .call-list { margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--line); }
+    .call-list li { display: grid; grid-template-columns: auto 1fr auto; gap: 8px; align-items: baseline; padding: 8px 0; border-bottom: 1px solid #e9eff4; font-size: 12px; }
+    .badge { min-width: 34px; padding: 2px 5px; border-radius: 4px; color: white; text-align: center; font-size: 10px; font-weight: 800; letter-spacing: .04em; }
+    .badge.del { background: #247ba0; } .badge.dup { background: #d1495b; }
+    .location { min-width: 0; overflow: hidden; color: var(--ink); font-variant-numeric: tabular-nums; text-overflow: ellipsis; white-space: nowrap; }
+    .size { color: var(--muted); font-weight: 700; white-space: nowrap; }
+    .note { margin: 9px 0 18px; color: var(--muted); font-size: 11px; }
+    .report-link {
+      display: flex; align-items: center; justify-content: space-between; gap: 12px;
+      margin-top: 10px; padding: 12px 14px; border-radius: 8px; color: white;
+      text-decoration: none; font-size: 13px; font-weight: 750; transition: filter .15s, transform .15s;
+    }
+    .report-link:hover, .report-link:focus-visible { filter: brightness(1.08); transform: translateY(-1px); }
+    .report-link::after { content: "→"; font-size: 18px; line-height: 1; }
+    .cnv .report-link { background: var(--cnv); } .snv .report-link { background: var(--snv); } .sv .report-link { background: var(--sv); }
+    .variant-links { display: grid; gap: 10px; margin-top: 16px; }
+    .variant-link { padding: 14px; border: 1px solid var(--line); border-left: 4px solid var(--snv); border-radius: 7px; text-decoration: none; transition: border-color .15s, background .15s; }
+    .variant-link:hover { border-color: var(--snv); background: #faf7fe; }
+    .variant-link strong { display: block; color: var(--navy); font-size: 14px; }
+    .variant-link span { color: var(--muted); font-size: 12px; }
+    .sv-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 18px; }
+    .sv-count { display: flex; justify-content: space-between; gap: 8px; padding: 9px 10px; border: 1px solid #e7edf3; border-radius: 7px; background: #f8fafc; }
+    .sv-count span { color: var(--muted); font-size: 12px; font-weight: 750; }
+    .sv-count strong { color: var(--navy); font-size: 14px; font-variant-numeric: tabular-nums; }
+    .highlight { margin: 0 0 15px; padding: 12px 13px; border-left: 4px solid var(--sv); background: var(--sv-pale); color: #6b3b22; font-size: 12px; }
+    .highlight strong { color: #8b3c15; }
+    footer { padding: 0 0 28px; color: var(--muted); font-size: 11px; }
+    @media (max-width: 1050px) { .panels { grid-template-columns: 1fr; } .panel-head { min-height: 0; } }
+    @media (max-width: 760px) {
+      .header-inner, main, footer { width: min(100% - 24px, 1440px); }
+      .topline, .intro { align-items: flex-start; flex-direction: column; }
+      .nav { justify-content: flex-start; }
+      .header-inner { padding-top: 20px; }
+    }
+    @media (max-width: 430px) { .metrics.three { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <div class="header-inner">
+      <div class="topline">
+        <div>
+          <p class="eyebrow">Fiber-seq · GRCh38</p>
+          <h1>JRe65 Neuroblastoma</h1>
+          <p class="subtitle">Integrated variant analysis overview</p>
+        </div>
+        <nav class="nav" aria-label="Analysis reports">
+          <a href="cnv_genome/JRe65_genome_CNV_dosage_tabs.html">CNV genome</a>
+          <a href="snv_interactive/JRe65_Neuroblastoma.clinvar_pathogenic.interactive.html">ClinVar SNVs</a>
+          <a href="snv_interactive/JRe65_Neuroblastoma.cosmic.interactive.html">COSMIC SNVs</a>
+          <a href="sv_interactive/JRe65_Neuroblastoma.structural_variants.interactive.html">SV table</a>
+          <a href="sv_bnd_candidate/JRe65_interactive_SV_candidate_circos.html">BND candidates</a>
+        </nav>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div class="intro">
+      <h2>Variant report summary</h2>
+      <p>Counts are derived from the annotated source VCF/CSV files.</p>
+    </div>
+
+    <div class="panels">
+      <article class="panel cnv">
+        <header class="panel-head">
+          <div class="category">CNV</div>
+          <h3>Copy-number variants</h3>
+          <p>Depth-supported losses and gains across primary chromosomes.</p>
+        </header>
+        <div class="panel-body">
+          <div class="metrics three">
+            <div class="metric"><strong>336</strong><span>Total</span></div>
+            <div class="metric"><strong>254</strong><span>Deletions</span></div>
+            <div class="metric"><strong>82</strong><span>Duplications</span></div>
+          </div>
+          <h4 class="section-title">Largest CNVs</h4>
+          <ul class="call-list" aria-label="Ten largest copy-number variants">
+            <li><span class="badge del">DEL</span><span class="location">chr10:41,843,000–133,797,000 · CN 1</span><span class="size">92.0 Mb</span></li>
+            <li><span class="badge del">DEL</span><span class="location">chr1:742,000–62,741,000 · CN 1</span><span class="size">62.0 Mb</span></li>
+            <li><span class="badge del">DEL</span><span class="location">chrX:2,743,000–49,324,000 · CN 1</span><span class="size">46.6 Mb</span></li>
+            <li><span class="badge del">DEL</span><span class="location">chr10:42,000–38,999,000 · CN 1</span><span class="size">39.0 Mb</span></li>
+            <li><span class="badge del">DEL</span><span class="location">chrX:102,494,000–141,066,000 · CN 1</span><span class="size">38.6 Mb</span></li>
+            <li><span class="badge dup">DUP</span><span class="location">chr8:92,857,000–128,536,000 · CN 3</span><span class="size">35.7 Mb</span></li>
+            <li><span class="badge del">DEL</span><span class="location">chr7:108,151,000–142,354,000 · CN 1</span><span class="size">34.2 Mb</span></li>
+            <li><span class="badge del">DEL</span><span class="location">chrX:80,016,000–102,409,000 · CN 1</span><span class="size">22.4 Mb</span></li>
+            <li><span class="badge dup">DUP</span><span class="location">chr17:48,648,000–70,311,000 · CN 4</span><span class="size">21.7 Mb</span></li>
+            <li><span class="badge del">DEL</span><span class="location">chrX:62,827,000–79,979,000 · CN 1</span><span class="size">17.2 Mb</span></li>
+          </ul>
+          <p class="note">37 calls are ≥1 Mb; the 10 largest are shown here. Total counts include primary chromosomes only.</p>
+          <a class="report-link" href="cnv_genome/JRe65_genome_CNV_dosage_tabs.html">Explore genome CNV dosage</a>
+        </div>
+      </article>
+
+      <article class="panel snv">
+        <header class="panel-head">
+          <div class="category">SNV</div>
+          <h3>Annotated small variants</h3>
+          <p>ClinVar pathogenic calls and COSMIC-matched variants.</p>
+        </header>
+        <div class="panel-body">
+          <div class="metrics">
+            <div class="metric"><strong>124</strong><span>Pathogenic SNVs</span></div>
+            <div class="metric"><strong>161,949</strong><span>COSMIC SNVs</span></div>
+          </div>
+          <h4 class="section-title">Interactive tables</h4>
+          <div class="variant-links">
+            <a class="variant-link" href="snv_interactive/JRe65_Neuroblastoma.clinvar_pathogenic.interactive.html">
+              <strong>ClinVar pathogenic variants →</strong>
+              <span>124 unique variants · 254 VEP annotation rows</span>
+            </a>
+            <a class="variant-link" href="snv_interactive/JRe65_Neuroblastoma.cosmic.interactive.html">
+              <strong>COSMIC annotated variants →</strong>
+              <span>161,949 unique variants · 242,716 VEP annotation rows</span>
+            </a>
+          </div>
+          <p class="note">Unique counts use chromosome, position, reference, and alternate allele. Tables retain transcript-level annotation rows.</p>
+        </div>
+      </article>
+
+      <article class="panel sv">
+        <header class="panel-head">
+          <div class="category">SV</div>
+          <h3>Structural variants</h3>
+          <p>SV call distribution and ranked fusion / BND candidates.</p>
+        </header>
+        <div class="panel-body">
+          <h4 class="section-title">VCF record counts</h4>
+          <div class="sv-grid">
+            <div class="sv-count"><span>Insertions</span><strong>18,658</strong></div>
+            <div class="sv-count"><span>Deletions</span><strong>15,069</strong></div>
+            <div class="sv-count"><span>BND records</span><strong>2,347</strong></div>
+            <div class="sv-count"><span>Duplications</span><strong>240</strong></div>
+            <div class="sv-count"><span>Inversions</span><strong>50</strong></div>
+            <div class="sv-count"><span>Ranked BNDs</span><strong>58</strong></div>
+          </div>
+          <p class="highlight"><strong>Top fusion candidates:</strong> SBF2–IQCJ, DDX10–SKA3, CD38–BRD10, DLG2–B3GLCT, and CRYZ–HOMER2.</p>
+          <p class="note">BND is represented by breakend records in the source VCF. The ranked set contains complete, PASS, primary-chromosome, gene-linked events.</p>
+          <a class="report-link" href="sv_interactive/JRe65_Neuroblastoma.structural_variants.interactive.html">Explore INS / DEL / DUP / INV table</a>
+          <a class="report-link" href="sv_bnd_candidate/JRe65_interactive_SV_candidate_circos.html">View fusion / BND candidates</a>
+        </div>
+      </article>
+    </div>
+  </main>
+
+  <footer>
+    JRe65 Neuroblastoma · GRCh38 · Standalone reports use relative paths and remain portable with this directory.
+  </footer>
+</body>
+</html>

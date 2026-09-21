@@ -45,6 +45,14 @@ When the `FIRE` skill is used, the AI agent will:
 3. Create and validate `FIRE` config files: `FIRE/pipeline_config/config.tbl`, `FIRE/pipeline_config/config.yaml`, and `FIRE/pipeline_config/run-fire.sh`.
 4. After user approval, launch FIRE with the Sasquatch Slurm profile using `run-fire.sh`. After successful completion, offer to copy the FIRE results beside the archived pacvar project on Helen RSS.
 
+## `pacvar-dashboard` AI-agentic workflow
+
+The `pacvar-dashboard` skill creates portable, per-sample interactive reports from VEP-annotated pacvar results. When it is used, the AI agent will:
+
+1. Ask for the completed pacvar project directory and verify the available SNV, SV, BND/fusion-candidate, and CNV annotation files.
+2. Generate searchable variant tables and interactive CNV and structure variants breakends (fusion) visualizations for each sample, structure variants table, and clinical relavent small variants tables.
+3. Create an `index_<sampleID>.html` page that summarizes the findings and links all generated reports in a self-contained `dashboard` sub-directory.
+
 ## `pacvar + FIRE` AI-agentic workflow
 
 The `pacvar-plus-FIRE` skill coordinates both pipelines as one ordered workflow. When it is used, the AI agent will:

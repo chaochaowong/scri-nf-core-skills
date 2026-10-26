@@ -17,10 +17,12 @@ Ask the user to provide the starting project directory. Resolve it with `realpat
 - A very short project ID suitable for a scratch-directory name.
 - The name of the mamba environment containing Nextflow. If the user does not know or does not have one, offer to create the standard environment described below.
 - Ask whether to run the moving `dev` branch or the reproducible `1.1.0` release tag. Default to `1.1.0` when the user has no preference.
-- Ask whether the user wants to change the launch script's `--genome` parameter. Preserve the template value when they do not request a change.
+- Ask which reference genome to use. Treat `T2T` and `CHM13` as requests to use the T2T-CHM13 v2.0 reference; use `GATK.GRCh38` when the user selects GRCh38.
+- Ask the user to provide or explicitly confirm the required `input` and `outdir` values for `params.json`. Propose the generated absolute samplesheet path as `input` and the resolved starting project directory as `outdir`.
+- Ask for the email address to write to the required `email` parameter in `params.json`. Do not infer an email address or leave an example placeholder in the generated file.
 - Ask for the Helen active Research Storage Server (RSS) destination to which the completed project should be copied. Active Helen paths usually begin with `/data/rss/helens/`. Permit the user to defer this choice, but record the destination before performing a post-run copy.
 
-Do not guess sample names, BAM paths, the project ID, the mamba environment, or an RSS destination. Permit an empty `pbi` value. Check that the project directory and supplied input/config paths exist, and report missing paths before generating dependent files. When an RSS destination is supplied, require it to begin with `/data/rss/helens/` and resolve or validate it without creating a guessed directory hierarchy.
+Do not guess sample names, BAM paths, the project ID, the mamba environment, the email address, or an RSS destination. Permit an empty `pbi` value. Check that the project directory and supplied input/config paths exist, and report missing paths before generating dependent files. When an RSS destination is supplied, require it to begin with `/data/rss/helens/` and resolve or validate it without creating a guessed directory hierarchy.
 
 ## Ensure a Nextflow environment
 
@@ -73,6 +75,39 @@ Write `pipeline_params/sasquatch-cpu-pacvar.config`.
 - Preserve the template's Slurm `partition` value unless the user explicitly requests another partition. The association/account and partition are different settings; do not replace the partition with the association name.
 - Preserve all unrelated custom settings.
 
+### Build the parameter file
+
+Always create `pipeline_params/params.json` and use it as the single source of pipeline parameters. Select the starting example by reference genome:
+
+- For GRCh38, read [the GATK GRCh38 example](references/params-gatk-grch38.json) and retain `"genome": "GATK.GRCh38"`.
+- For T2T or CHM13, read [the T2T-CHM13 v2.0 example](references/params-chm13-v2.0.json).
+- For another reference genome, collect its required parameters from the user and create a valid `params.json`; do not repurpose either example without checking that its reference settings apply.
+
+Review and adapt every project-specific value rather than copying an example unchanged. Require these three parameters in every generated file:
+
+- `input`: the user-confirmed absolute path to the samplesheet. Propose `<resolved-project-directory>/pipeline_params/nf-sample-sheet.csv` after creating and validating that file, but require the user to provide or confirm this value.
+- `outdir`: the user-confirmed absolute output directory. It must equal the resolved starting project directory used as `BASE`.
+- `email`: the email address supplied by the user. Replace the example placeholder; do not remove this key, invent an address, or leave `<user-email>` in the generated file.
+
+Preserve the other applicable workflow parameters from the selected example and apply any changes requested by the user. Keep the file valid JSON, and preserve an existing `pipeline_params/params.json` unless the user approves overwriting it.
+
+For T2T/CHM13 specifically, require `params.json` to contain nonempty values for all four of these keys:
+
+- `fasta`
+- `fasta_fai`
+- `dbsnp`
+- `dbsnp_tbi`
+
+Require each value to be an absolute path to an existing readable file. The example paths are in `sarthy_lab` association space. Validate their accessibility even for a `sarthy_lab` user. For a user from another association, explain that those example files may be inaccessible and ask them for accessible paths to the four reference files; update `params.json` with the supplied paths before proceeding. Do not assume that changing only the association component of a path identifies equivalent files.
+
+Also require this exact JSON value for every T2T/CHM13 run:
+
+```json
+"skip_ensemblvep": true
+```
+
+Ensembl VEP must be skipped for this reference. Do not copy the T2T/CHM13 reference paths or its VEP setting into another reference-genome configuration unless they apply to that run.
+
 ### Build the launch script
 
 Use `https://raw.githubusercontent.com/chaochaowong/sasquatch-nf-config/main/run-pacvar.sh` as the starting template and write the result to `pipeline_params/run-pacvar.sh`.
@@ -84,11 +119,15 @@ Customize it as follows:
 - Set `BASE` to the absolute starting project directory. Require it to begin with `/data/hps/assoc/`; stop and ask the user for an association-space project directory if it does not.
 - Set `WORKDIR` to `/data/hps/assoc/private/<assoc>/user/${USER}/tmp/<PROJECT_ID>` using the selected association and project ID. Require it to remain under `/data/hps/assoc/`. Preserve `${USER}` as a shell variable; do not substitute the current agent's username.
 - Set the `-r` argument for `nf-core/pacvar` to the selected revision (`dev` or `1.1.0`).
-- If the selected revision is `1.1.0` and the user sets `--genome CHM13`, also set `--skip_ensemblvep true`. This is mandatory because the Ensembl VEP integration in pacvar 1.1.0 cannot handle CHM13. Explain that VEP annotation will be skipped for this combination. Use the exact parameter name `skip_ensemblvep`; do not use the misspellings `skip_ensemblvel` or `skip_ensemblvep:`. Do not impose this revision-specific rule on `dev` without first checking the selected revision's current compatibility.
-- Keep `--outdir "${BASE}"` because the starting project directory is the pipeline output directory.
-- Keep the samplesheet at `${BASE}/pipeline_params/nf-sample-sheet.csv`.
+- Always add this argument to the `nextflow run` command, before `-resume` when it is present:
+
+  ```bash
+  -params-file "${BASE}/pipeline_params/params.json" \
+  ```
+
+  Put all pipeline parameters, including `input`, `outdir`, `email`, `genome` or custom reference files, workflow selection, callers, and skip options, in `params.json`. Do not duplicate any of them as `--<parameter>` arguments in `run-pacvar.sh`. Keep Nextflow runtime and infrastructure options such as `-r`, `-c`, `-profile`, `-w`, `-params-file`, and `-resume` in the launch script.
 - Make the config path robust to the launch location, preferably by resolving the script's own directory and passing its `sasquatch-cpu-pacvar.config` to `-c`.
-- Preserve other pipeline parameters from the template unless the user requests edits.
+- Use the exact key `skip_ensemblvep` in `params.json`; do not use misspellings such as `skip_ensemblvel`.
 
 Make `run-pacvar.sh` executable for all users:
 
@@ -103,7 +142,7 @@ Before asking the user to run the pipeline:
 1. Confirm that the samplesheet header is exactly `sample,bam,pbi`, every row has three fields, every sample name is present, and every supplied path exists.
 2. Confirm that the config contains the selected association in both `params.assoc` and `params.account` and that the Slurm partition remains valid.
 3. Run `bash -n pipeline_params/run-pacvar.sh`.
-4. Confirm that `PROJECT`, `PROJECT_ID`, `BASE`, `WORKDIR`, the config path, the input path, and the output path have the intended values. Verify that both `BASE` and `WORKDIR` begin with `/data/hps/assoc/` and that `WORKDIR` contains the selected association name.
+4. Confirm that `PROJECT`, `PROJECT_ID`, `BASE`, `WORKDIR`, and the config and parameter-file paths have the intended values. Verify that both `BASE` and `WORKDIR` begin with `/data/hps/assoc/` and that `WORKDIR` contains the selected association name.
 5. Locate mamba with `command -v mamba`, confirm the named environment with `mamba env list`, and check Nextflow with `mamba run -n <environment> nextflow -version`. Retain the resolved mamba executable path for the tmux launch. If mamba, the environment, or Nextflow is unavailable, report which item is missing; do not silently choose or modify another environment.
 6. Confirm that `run-pacvar.sh` uses `-r 1.1.0` by default. Because the script runs the remote `nf-core/pacvar` project, do not require a separate pull for this tagged release. If the user selects `-r dev`, remind them that their cached development branch may be stale and that they should consider refreshing it before the run:
 
@@ -112,15 +151,15 @@ Before asking the user to run the pipeline:
    ```
 
    Present this as a recommendation rather than running it automatically or requiring it to succeed. Keep `-r dev` in `run-pacvar.sh` when the user selects the development branch.
-7. If `run-pacvar.sh` combines `-r 1.1.0` with `--genome CHM13`, require `--skip_ensemblvep true` and report an error if it is absent, false, or misspelled.
+7. Parse `pipeline_params/params.json` and confirm that it is valid JSON. Require nonempty `input`, `outdir`, and `email` values; reject example placeholders. Confirm that `input` is the user-confirmed absolute path to an existing readable samplesheet, `outdir` is the user-confirmed absolute project directory used as `BASE`, and `email` is the address supplied by the user. For GRCh38, require `genome` to equal `GATK.GRCh38`. For T2T/CHM13, additionally confirm that `fasta`, `fasta_fai`, `dbsnp`, and `dbsnp_tbi` are nonempty absolute paths to existing readable files and that `skip_ensemblvep` is the JSON Boolean `true`; report an error for a missing, false, quoted, or misspelled value. Confirm that `run-pacvar.sh` includes `-params-file "${BASE}/pipeline_params/params.json"` and does not duplicate pipeline parameters as command-line arguments.
 
-Summarize the generated files and ask the user to inspect everything in `pipeline_params`. Ask whether they want to change any paths, configuration, or pacvar parameters. Apply requested edits and repeat the relevant validation.
+Summarize the generated files and ask the user to inspect everything in `pipeline_params`, including `params.json`. Ask whether they want to change any paths, configuration, or pacvar parameters. Apply requested edits and repeat the relevant validation.
 
 ## Launch the pipeline when requested
 
 Do not launch the pipeline until both conditions are satisfied:
 
-1. The user has confirmed that `nf-sample-sheet.csv`, `sasquatch-cpu-pacvar.config`, and `run-pacvar.sh` are correct.
+1. The user has confirmed that `nf-sample-sheet.csv`, `sasquatch-cpu-pacvar.config`, `params.json`, and `run-pacvar.sh` are correct.
 2. The user explicitly asks the agent to run the pipeline.
 
 When both conditions are satisfied:
@@ -154,7 +193,7 @@ When both conditions are satisfied:
 
 ## Handle completed output
 
-Treat `<project-directory>/annotation/vep` as the standard location for VEP-annotated variant VCF files. Before downstream work or archival, verify from Nextflow's final status and logs that the pipeline completed successfully; a missing tmux session alone does not prove success. If `--skip_ensemblvep true` was used, do not expect VEP-annotated VCFs and explain why the directory or files may be absent.
+Treat `<project-directory>/annotation/vep` as the standard location for VEP-annotated variant VCF files. Before downstream work or archival, verify from Nextflow's final status and logs that the pipeline completed successfully; a missing tmux session alone does not prove success. If `skip_ensemblvep` was set to `true` in `params.json`, as required for T2T/CHM13, do not expect VEP-annotated VCFs and explain why the directory or files may be absent.
 
 ### Copy the project to Helen
 

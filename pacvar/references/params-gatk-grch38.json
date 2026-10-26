@@ -1,0 +1,11 @@
+{
+  "genome": "GATK.GRCh38",
+  "input": "/data/hps/assoc/private/sarthy_lab/NGS/FiberSeq_Results/HSe111_MOLM12_DOXO-Ida-AZD-ACLA-ActD-6hr_CHM13_Fiberseq_20261011/pipeline_params/nf-sample-sheet.csv",
+  "outdir": "/data/hps/assoc/private/sarthy_lab/NGS/FiberSeq_Results/HSe111_MOLM12_DOXO-Ida-AZD-ACLA-ActD-6hr_CHM13_Fiberseq_20261011",
+  "workflow": "wgs",
+  "skip_demultiplexing": true,
+  "sv_caller": "sawfish",
+  "skip_hificnv": true,
+  "skip_fiberseq": false,
+  "email": "<user-email>"
+}
